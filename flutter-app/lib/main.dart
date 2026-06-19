@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 
 import 'features/vocabulary/domain/usecases/get_words.dart';
 import 'features/vocabulary/domain/usecases/add_word.dart';
+import 'features/vocabulary/domain/usecases/update_word.dart';
+import 'features/vocabulary/domain/usecases/delete_word.dart';
 import 'features/vocabulary/data/repositories/vocabulary_repository_impl.dart';
 import 'features/vocabulary/data/datasources/remote_data_source.dart';
 import 'features/vocabulary/presentation/providers/vocabulary_provider.dart';
@@ -29,6 +31,8 @@ Future<void> main() async {
 
   final getWordsUseCase = GetWords(repository);
   final addWordUseCase = AddWord(repository);
+  final updateWordUseCase = UpdateWord(repository);
+  final deleteWordUseCase = DeleteWord(repository);
 
   runApp(
     MultiProvider(
@@ -37,7 +41,9 @@ Future<void> main() async {
           create: (_) => VocabularyProvider(
             getWordsUseCase: getWordsUseCase,
             addWordUseCase: addWordUseCase,
-          )..fetchWords(),
+            updateWordUseCase: updateWordUseCase,
+            deleteWordUseCase: deleteWordUseCase,
+          )..initialize(),
         ),
       ],
       child: const LingoBreezeApp(),
@@ -78,7 +84,7 @@ class LingoBreezeApp extends StatelessWidget {
       title: 'LingoBreeze',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black87),
         useMaterial3: true,
         textTheme: GoogleFonts.interTextTheme(),
       ),

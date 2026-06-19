@@ -28,8 +28,46 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     String translation,
   ) async {
     try {
-      final newWord = await remoteDataSource.addWord(word, meaning, translation);
+      final newWord = await remoteDataSource.addWord(
+        word,
+        meaning,
+        translation,
+      );
       return Right(newWord);
+    } on ConnectionFailure {
+      return Left(ConnectionFailure());
+    } catch (e) {
+      return Left(DatabaseFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, WordEntity>> updateWord(
+    String id,
+    String word,
+    String meaning,
+    String translation,
+  ) async {
+    try {
+      final updatedWord = await remoteDataSource.updateWord(
+        id,
+        word,
+        meaning,
+        translation,
+      );
+      return Right(updatedWord);
+    } on ConnectionFailure {
+      return Left(ConnectionFailure());
+    } catch (e) {
+      return Left(DatabaseFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteWord(String id) async {
+    try {
+      await remoteDataSource.deleteWord(id);
+      return const Right(unit);
     } on ConnectionFailure {
       return Left(ConnectionFailure());
     } catch (e) {

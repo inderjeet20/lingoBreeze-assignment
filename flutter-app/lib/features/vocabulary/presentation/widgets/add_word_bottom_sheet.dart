@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../domain/entities/word_entity.dart';
 import '../providers/vocabulary_provider.dart';
 
 class AddWordBottomSheet extends StatefulWidget {
-  const AddWordBottomSheet({super.key});
+  final WordEntity? initialWord;
+
+  const AddWordBottomSheet({super.key, this.initialWord});
 
   @override
   State<AddWordBottomSheet> createState() => _AddWordBottomSheetState();
@@ -15,6 +19,20 @@ class _AddWordBottomSheetState extends State<AddWordBottomSheet> {
   final _meaningController = TextEditingController();
   final _translationController = TextEditingController();
   bool _isLoading = false;
+
+  bool get _isEditing => widget.initialWord != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final initialWord = widget.initialWord;
+    if (initialWord != null) {
+      _wordController.text = initialWord.word;
+      _meaningController.text = initialWord.meaning;
+      _translationController.text = initialWord.translation;
+    }
+  }
 
   @override
   void dispose() {
@@ -31,24 +49,34 @@ class _AddWordBottomSheetState extends State<AddWordBottomSheet> {
       _isLoading = true;
     });
 
-    final success = await context.read<VocabularyProvider>().addNewWord(
-      _wordController.text.trim(),
-      _meaningController.text.trim(),
-      _translationController.text.trim(),
-    );
+    final provider = context.read<VocabularyProvider>();
+    final word = _wordController.text.trim();
+    final meaning = _meaningController.text.trim();
+    final translation = _translationController.text.trim();
+
+    final success = _isEditing
+        ? await provider.updateExistingWord(
+            widget.initialWord!.id,
+            word,
+            meaning,
+            translation,
+          )
+        : await provider.addNewWord(word, meaning, translation);
+
+    if (!mounted) return;
 
     setState(() {
       _isLoading = false;
     });
 
     if (success) {
-      if (mounted) Navigator.pop(context);
+      Navigator.pop(context);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save word. Check backend/Firebase connection.')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save word. Check backend connection.'),
+        ),
+      );
     }
   }
 
@@ -70,9 +98,12 @@ class _AddWordBottomSheetState extends State<AddWordBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Add New Word',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                _isEditing ? 'Edit Word' : 'Add Word',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -97,7 +128,7 @@ class _AddWordBottomSheetState extends State<AddWordBottomSheet> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: Colors.black87,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -113,7 +144,13 @@ class _AddWordBottomSheetState extends State<AddWordBottomSheet> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('Save Word', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : Text(
+                        _isEditing ? 'Update Word' : 'Save Word',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ],
           ),

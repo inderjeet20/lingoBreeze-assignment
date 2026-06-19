@@ -9,4 +9,11 @@ abstract class VocabularyRepository {
     String meaning,
     String translation,
   );
+  Future<Either<Failure, WordEntity>> updateWord(
+    String id,
+    String word,
+    String meaning,
+    String translation,
+  );
+  Future<Either<Failure, Unit>> deleteWord(String id);
 }
